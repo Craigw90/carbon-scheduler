@@ -1,0 +1,45 @@
+codecov:
+  require_ci_to_pass: yes
+  notify:
+    wait_for_ci: yes
+
+coverage:
+  precision: 2
+  round: down
+  range: "70...95"
+  
+  status:
+    project:
+      default:
+        target: 75%
+        threshold: 5%
+    patch:
+      default:
+        target: 70%
+        threshold: 10%
+
+flags:
+  backend:
+    paths:
+      - backend/
+    carryforward: true
+    
+  frontend:
+    paths:
+      - frontend/
+    carryforward: true
+
+ignore:
+  - "backend/venv/"
+  - "backend/tests/"
+  - "frontend/node_modules/"
+  - "frontend/__tests__/"
+  - "frontend/.next/"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/test_*.py"
+
+comment:
+  layout: "reach,diff,flags,files,footer"
+  behavior: default
+  require_changes: false

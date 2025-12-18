@@ -122,10 +122,11 @@ export default function CustomTaskModal({ isOpen, onClose, onSave }: CustomTaskM
         
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="task-name" className="block text-sm font-medium text-gray-700 mb-1">
               Task Name
             </label>
             <input
+              id="task-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -135,10 +136,11 @@ export default function CustomTaskModal({ isOpen, onClose, onSave }: CustomTaskM
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="task-category" className="block text-sm font-medium text-gray-700 mb-1">
               Category
             </label>
             <select
+              id="task-category"
               value={category}
               onChange={(e) => setCategory(e.target.value as CustomTask['category'])}
               className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
@@ -151,11 +153,12 @@ export default function CustomTaskModal({ isOpen, onClose, onSave }: CustomTaskM
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="task-duration-range" className="block text-sm font-medium text-gray-700 mb-1">
               Duration (hours)
             </label>
             <div className="flex gap-3 items-center">
               <input
+                id="task-duration-range"
                 type="range"
                 min="1"
                 max="24"
@@ -169,6 +172,7 @@ export default function CustomTaskModal({ isOpen, onClose, onSave }: CustomTaskM
                 className="flex-1"
               />
               <input
+                id="task-duration-number"
                 type="number"
                 min="1"
                 max="24"
@@ -191,11 +195,12 @@ export default function CustomTaskModal({ isOpen, onClose, onSave }: CustomTaskM
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="task-energy-range" className="block text-sm font-medium text-gray-700 mb-1">
               Energy Consumption (kWh)
             </label>
             <div className="flex gap-3 items-center">
               <input
+                id="task-energy-range"
                 type="range"
                 min={Math.ceil(validation.min)}
                 max={validation.max}
@@ -209,6 +214,7 @@ export default function CustomTaskModal({ isOpen, onClose, onSave }: CustomTaskM
                 className="flex-1"
               />
               <input
+                id="task-energy-number"
                 type="number"
                 min={Math.ceil(validation.min)}
                 max={validation.max}

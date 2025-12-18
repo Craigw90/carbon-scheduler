@@ -43,11 +43,20 @@ export interface OptimalTimeResponse {
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Conditionally use AbortSignal.timeout only when not in test environment
+const createAbortSignal = (timeout: number) => {
+  if (process.env.NODE_ENV === 'test') {
+    // In test environment, don't use timeout to avoid test conflicts
+    return undefined;
+  }
+  return AbortSignal.timeout(timeout);
+};
+
 export const carbonApi = {
   async getCurrentIntensity(postcode: string = 'G1'): Promise<CurrentIntensityData> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/carbon/current?postcode=${postcode}`, {
-        signal: AbortSignal.timeout(10000)
+        signal: createAbortSignal(10000)
       });
       if (!response.ok) {
         if (response.status === 429) {
@@ -69,7 +78,7 @@ export const carbonApi = {
   async getForecast(postcode: string = 'G1', hours: number = 48): Promise<CarbonIntensity[]> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/carbon/forecast?postcode=${postcode}&hours=${hours}`, {
-        signal: AbortSignal.timeout(15000)
+        signal: createAbortSignal(15000)
       });
       if (!response.ok) {
         if (response.status === 429) {
@@ -99,7 +108,7 @@ export const carbonApi = {
           task_type: taskType,
           postcode: postcode
         }),
-        signal: AbortSignal.timeout(15000)
+        signal: createAbortSignal(15000)
       });
       if (!response.ok) {
         if (response.status === 429) {
@@ -120,7 +129,7 @@ export const carbonApi = {
   async getTasks(): Promise<Record<string, Task>> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/carbon/tasks`, {
-        signal: AbortSignal.timeout(10000)
+        signal: createAbortSignal(10000)
       });
       if (!response.ok) {
         if (response.status === 429) {

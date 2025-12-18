@@ -3,7 +3,7 @@ Carbon Intensity API Service
 Integrates with UK National Grid Carbon Intensity API
 """
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Optional
 from pydantic import BaseModel
 import time
@@ -69,7 +69,7 @@ class CarbonIntensityService:
             CarbonIntensityService._rate_limit()
             
             # Get current time in ISO format (rounded to next 30 min)
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             # Round to next half hour
             if now.minute < 30:
                 now = now.replace(minute=30, second=0, microsecond=0)
@@ -133,7 +133,7 @@ class CarbonIntensityService:
             result = {
                 'intensity': current['intensity']['forecast'],
                 'region': data['data'][0]['shortname'],
-                'timestamp': datetime.utcnow()
+                'timestamp': datetime.now(timezone.utc)
             }
             
             # Cache the result
