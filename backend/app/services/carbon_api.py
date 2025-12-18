@@ -43,11 +43,18 @@ class CarbonIntensityService:
             List of carbon intensity readings
         """
         try:
-            # Get current time in ISO format
-            now = datetime.utcnow().isoformat() + "Z"
+            # Get current time in ISO format (rounded to next 30 min)
+            now = datetime.utcnow()
+            # Round to next half hour
+            if now.minute < 30:
+                now = now.replace(minute=30, second=0, microsecond=0)
+            else:
+                now = now.replace(hour=now.hour + 1, minute=0, second=0, microsecond=0)
             
-            # Construct API URL
-            url = f"{CarbonIntensityService.BASE_URL}/regional/intensity/{now}/PT{hours_ahead}H/postcode/{postcode}"
+            now_str = now.isoformat() + "Z"
+            
+            # Use national forecast (regional forecasts are limited)
+            url = f"{CarbonIntensityService.BASE_URL}/intensity/{now_str}/fw{hours_ahead}h"
             
             response = requests.get(url, timeout=10)
             response.raise_for_status()
@@ -56,7 +63,7 @@ class CarbonIntensityService:
             
             # Parse response
             forecast = []
-            for slot in data['data']['data']:
+            for slot in data['data']:
                 forecast.append(CarbonIntensity(
                     from_time=datetime.fromisoformat(slot['from'].replace('Z', '+00:00')),
                     to_time=datetime.fromisoformat(slot['to'].replace('Z', '+00:00')),
