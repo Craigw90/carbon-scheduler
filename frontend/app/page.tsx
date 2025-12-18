@@ -18,8 +18,38 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    loadCurrentIntensity();
+    const timeoutId = setTimeout(() => {
+      if (isValidUKPostcode(postcode)) {
+        loadCurrentIntensity();
+      }
+    }, 500);
+    return () => clearTimeout(timeoutId);
   }, [postcode]);
+
+  const isValidUKPostcode = (postcode: string): boolean => {
+    if (!postcode || postcode.length < 2) return false;
+    
+    // UK postcode regex pattern
+    // Matches: M1 1AA, M60 1NW, GIR 0AA, etc.
+    const ukPostcodeRegex = /^[A-Z]{1,2}[0-9R][0-9A-Z]?\s?[0-9][A-Z]{2}$|^[A-Z]{1,2}[0-9R][0-9A-Z]?$/i;
+    
+    // Clean the postcode
+    const cleanPostcode = postcode.replace(/\s/g, '').toUpperCase();
+    
+    // Check basic pattern first
+    if (!ukPostcodeRegex.test(cleanPostcode)) {
+      return false;
+    }
+    
+    // For partial postcodes (just area code), check if it's at least 2-4 characters
+    if (cleanPostcode.length >= 2 && cleanPostcode.length <= 4) {
+      const areaRegex = /^[A-Z]{1,2}[0-9R][0-9A-Z]?$/i;
+      return areaRegex.test(cleanPostcode);
+    }
+    
+    // For full postcodes, should be 5-7 characters
+    return cleanPostcode.length >= 5 && cleanPostcode.length <= 7;
+  };
 
   const loadTasks = async () => {
     try {
@@ -37,13 +67,23 @@ export default function Home() {
     try {
       const data = await carbonApi.getCurrentIntensity(postcode);
       setCurrentIntensity(data);
+      setError(null);
     } catch (err) {
-      console.error('Failed to load current intensity:', err);
+      console.warn('Failed to load current intensity:', err);
+      if (err instanceof Error && err.message.includes('Rate limited')) {
+        setError('API rate limited - please wait a moment');
+        setTimeout(() => loadCurrentIntensity(), 5000);
+      }
     }
   };
 
   const handleOptimalTime = async () => {
     if (!selectedTask) return;
+    
+    if (!isValidUKPostcode(postcode)) {
+      setError('Please enter a valid UK postcode (e.g., PA11 3SY, G1 1AA, EH1 1YZ)');
+      return;
+    }
     
     setLoading(true);
     setError(null);
@@ -96,14 +136,34 @@ export default function Home() {
               <label htmlFor="postcode" className="block text-sm font-medium text-gray-700 mb-2">
                 Postcode
               </label>
-              <input
-                type="text"
-                id="postcode"
-                value={postcode}
-                onChange={(e) => setPostcode(e.target.value.toUpperCase())}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="e.g. G1, EH1, AB1"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  id="postcode"
+                  value={postcode}
+                  onChange={(e) => setPostcode(e.target.value.toUpperCase())}
+                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    postcode.length > 1 && !isValidUKPostcode(postcode) 
+                      ? 'border-red-300 bg-red-50' 
+                      : postcode.length > 1 && isValidUKPostcode(postcode)
+                      ? 'border-green-300 bg-green-50'
+                      : 'border-gray-300'
+                  }`}
+                  placeholder="e.g. PA11 3SY, G1 1AA, EH1 1YZ"
+                />
+                {postcode.length > 1 && (
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                    {isValidUKPostcode(postcode) ? (
+                      <span className="text-green-500">✓</span>
+                    ) : (
+                      <span className="text-red-500">✗</span>
+                    )}
+                  </div>
+                )}
+              </div>
+              {postcode.length > 1 && !isValidUKPostcode(postcode) && (
+                <p className="text-sm text-red-600 mt-1">Please enter a valid UK postcode</p>
+              )}
             </div>
 
             {currentIntensity && (

@@ -3,9 +3,10 @@ Carbon Intensity API Service
 Integrates with UK National Grid Carbon Intensity API
 """
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 from pydantic import BaseModel
+import time
 
 
 class CarbonIntensity(BaseModel):
@@ -29,7 +30,19 @@ class CarbonIntensityService:
     """Service for interacting with UK National Grid Carbon Intensity API"""
     
     BASE_URL = "https://api.carbonintensity.org.uk"
+    _cache = {}
+    _last_request_time = 0
+    _min_request_interval = 2
     
+    @staticmethod 
+    def _rate_limit():
+        """Apply rate limiting between requests"""
+        current_time = time.time()
+        time_since_last = current_time - CarbonIntensityService._last_request_time
+        if time_since_last < CarbonIntensityService._min_request_interval:
+            time.sleep(CarbonIntensityService._min_request_interval - time_since_last)
+        CarbonIntensityService._last_request_time = time.time()
+
     @staticmethod
     def get_forecast(postcode: str = "G1", hours_ahead: int = 48) -> List[CarbonIntensity]:
         """
@@ -42,7 +55,19 @@ class CarbonIntensityService:
         Returns:
             List of carbon intensity readings
         """
+        # Check cache first
+        cache_key = f"forecast_{hours_ahead}"
+        cache_expiry = 15 * 60  # 15 minutes
+        
+        if cache_key in CarbonIntensityService._cache:
+            cached_data, cached_time = CarbonIntensityService._cache[cache_key]
+            if time.time() - cached_time < cache_expiry:
+                return cached_data
+        
         try:
+            # Rate limiting
+            CarbonIntensityService._rate_limit()
+            
             # Get current time in ISO format (rounded to next 30 min)
             now = datetime.utcnow()
             # Round to next half hour
@@ -56,7 +81,9 @@ class CarbonIntensityService:
             # Use national forecast (regional forecasts are limited)
             url = f"{CarbonIntensityService.BASE_URL}/intensity/{now_str}/fw{hours_ahead}h"
             
-            response = requests.get(url, timeout=10)
+            response = requests.get(url, timeout=15, headers={
+                'User-Agent': 'Carbon-Scheduler/1.0 (Educational Project)'
+            })
             response.raise_for_status()
             
             data = response.json()
@@ -70,6 +97,9 @@ class CarbonIntensityService:
                     intensity=slot['intensity']['forecast']
                 ))
             
+            # Cache the result
+            CarbonIntensityService._cache[cache_key] = (forecast, time.time())
+            
             return forecast
             
         except requests.exceptions.RequestException as e:
@@ -78,19 +108,38 @@ class CarbonIntensityService:
     @staticmethod
     def get_current_intensity(postcode: str = "G1") -> Dict:
         """Get current carbon intensity for postcode"""
+        # Check cache first
+        cache_key = f"current_{postcode}"
+        cache_expiry = 5 * 60  # 5 minutes
+        
+        if cache_key in CarbonIntensityService._cache:
+            cached_data, cached_time = CarbonIntensityService._cache[cache_key]
+            if time.time() - cached_time < cache_expiry:
+                return cached_data
+        
         try:
+            # Rate limiting
+            CarbonIntensityService._rate_limit()
+            
             url = f"{CarbonIntensityService.BASE_URL}/regional/postcode/{postcode}"
-            response = requests.get(url, timeout=10)
+            response = requests.get(url, timeout=15, headers={
+                'User-Agent': 'Carbon-Scheduler/1.0 (Educational Project)'
+            })
             response.raise_for_status()
             
             data = response.json()
             current = data['data'][0]['data'][0]
             
-            return {
+            result = {
                 'intensity': current['intensity']['forecast'],
                 'region': data['data'][0]['shortname'],
                 'timestamp': datetime.utcnow()
             }
+            
+            # Cache the result
+            CarbonIntensityService._cache[cache_key] = (result, time.time())
+            
+            return result
             
         except requests.exceptions.RequestException as e:
             raise Exception(f"Failed to fetch current intensity: {str(e)}")

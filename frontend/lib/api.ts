@@ -40,48 +40,101 @@ export interface OptimalTimeResponse {
   forecast_length: number;
 }
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export const carbonApi = {
   async getCurrentIntensity(postcode: string = 'G1'): Promise<CurrentIntensityData> {
-    const response = await fetch(`${API_BASE_URL}/api/carbon/current?postcode=${postcode}`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch current intensity');
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/carbon/current?postcode=${postcode}`, {
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!response.ok) {
+        if (response.status === 429) {
+          await delay(2000);
+          throw new Error('Rate limited - please wait a moment');
+        }
+        throw new Error(`HTTP ${response.status}: Failed to fetch current intensity`);
+      }
+      const result = await response.json();
+      return result.data;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request timed out');
+      }
+      throw error;
     }
-    const result = await response.json();
-    return result.data;
   },
 
   async getForecast(postcode: string = 'G1', hours: number = 48): Promise<CarbonIntensity[]> {
-    const response = await fetch(`${API_BASE_URL}/api/carbon/forecast?postcode=${postcode}&hours=${hours}`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch forecast');
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/carbon/forecast?postcode=${postcode}&hours=${hours}`, {
+        signal: AbortSignal.timeout(15000)
+      });
+      if (!response.ok) {
+        if (response.status === 429) {
+          await delay(3000);
+          throw new Error('Rate limited - please wait a moment');
+        }
+        throw new Error(`HTTP ${response.status}: Failed to fetch forecast`);
+      }
+      const result = await response.json();
+      return result.data.forecast;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request timed out');
+      }
+      throw error;
     }
-    const result = await response.json();
-    return result.data.forecast;
   },
 
   async getOptimalTime(taskType: string, postcode: string = 'G1'): Promise<OptimalTimeResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/carbon/optimal-time`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        task_type: taskType,
-        postcode: postcode
-      })
-    });
-    if (!response.ok) {
-      throw new Error('Failed to calculate optimal time');
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/carbon/optimal-time`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          task_type: taskType,
+          postcode: postcode
+        }),
+        signal: AbortSignal.timeout(15000)
+      });
+      if (!response.ok) {
+        if (response.status === 429) {
+          await delay(3000);
+          throw new Error('Rate limited - please wait a moment');
+        }
+        throw new Error(`HTTP ${response.status}: Failed to calculate optimal time`);
+      }
+      return response.json();
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request timed out');
+      }
+      throw error;
     }
-    return response.json();
   },
 
   async getTasks(): Promise<Record<string, Task>> {
-    const response = await fetch(`${API_BASE_URL}/api/carbon/tasks`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch tasks');
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/carbon/tasks`, {
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!response.ok) {
+        if (response.status === 429) {
+          await delay(2000);
+          throw new Error('Rate limited - please wait a moment');
+        }
+        throw new Error(`HTTP ${response.status}: Failed to fetch tasks`);
+      }
+      const result = await response.json();
+      return result.data;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request timed out');
+      }
+      throw error;
     }
-    const result = await response.json();
-    return result.data;
   }
 };
