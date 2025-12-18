@@ -2,11 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { carbonApi, type Task, type CurrentIntensityData, type OptimalTimeResponse } from '../lib/api';
+import CustomTaskModal, { type CustomTask } from '../components/CustomTaskModal';
 
 export default function Home() {
   const [postcode, setPostcode] = useState('G1');
   const [selectedTask, setSelectedTask] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [tasks, setTasks] = useState<Record<string, Task>>({});
+  const [customTasks, setCustomTasks] = useState<CustomTask[]>([]);
+  const [showCustomModal, setShowCustomModal] = useState(false);
   const [currentIntensity, setCurrentIntensity] = useState<CurrentIntensityData | null>(null);
   const [optimalResult, setOptimalResult] = useState<OptimalTimeResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -15,6 +19,7 @@ export default function Home() {
   useEffect(() => {
     loadTasks();
     loadCurrentIntensity();
+    loadCustomTasks();
   }, []);
 
   useEffect(() => {
@@ -89,12 +94,82 @@ export default function Home() {
     setError(null);
     
     try {
-      const result = await carbonApi.getOptimalTime(selectedTask, postcode);
-      setOptimalResult(result);
+      const taskData = getSelectedTaskData();
+      if (!taskData) {
+        setError('Task not found');
+        return;
+      }
+
+      // For custom tasks, we need to use a direct calculation since they're not in the backend
+      if ('is_custom' in taskData && taskData.is_custom) {
+        // Get forecast data and calculate manually for custom tasks
+        const forecast = await carbonApi.getForecast(postcode, 48);
+        const currentIntensity = await carbonApi.getCurrentIntensity(postcode);
+        
+        // Simple optimal window calculation (similar to backend logic)
+        const duration = taskData.duration_hours;
+        const energy = taskData.energy_kwh;
+        
+        let bestWindow = null;
+        let lowestAvgIntensity = Infinity;
+        
+        for (let i = 0; i <= forecast.length - Math.ceil(duration * 2); i++) {
+          const windowSlots = forecast.slice(i, i + Math.ceil(duration * 2));
+          const avgIntensity = windowSlots.reduce((sum, slot) => sum + slot.intensity, 0) / windowSlots.length;
+          
+          if (avgIntensity < lowestAvgIntensity) {
+            lowestAvgIntensity = avgIntensity;
+            bestWindow = {
+              start_time: windowSlots[0].from,
+              end_time: windowSlots[windowSlots.length - 1].to,
+              avg_intensity: Math.round(avgIntensity),
+              carbon_saved_grams: Math.round((currentIntensity.intensity - avgIntensity) * energy * 1000),
+              percentage_saved: Math.round(((currentIntensity.intensity - avgIntensity) / currentIntensity.intensity) * 100)
+            };
+          }
+        }
+
+        if (bestWindow) {
+          setOptimalResult({
+            task_label: taskData.name,
+            task_icon: taskData.icon,
+            optimal_window: bestWindow,
+            current_intensity: currentIntensity.intensity,
+            forecast_length: forecast.length
+          });
+        }
+      } else {
+        // Use existing API for preset tasks
+        const result = await carbonApi.getOptimalTime(selectedTask, postcode);
+        setOptimalResult(result);
+      }
     } catch (err) {
       setError('Failed to calculate optimal time');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCustomTasks = () => {
+    const saved = localStorage.getItem('carbon-scheduler-custom-tasks');
+    if (saved) {
+      setCustomTasks(JSON.parse(saved));
+    }
+  };
+
+  const saveCustomTask = (task: CustomTask) => {
+    const updated = [...customTasks, task];
+    setCustomTasks(updated);
+    localStorage.setItem('carbon-scheduler-custom-tasks', JSON.stringify(updated));
+    setSelectedTask(task.id);
+  };
+
+  const deleteCustomTask = (taskId: string) => {
+    const updated = customTasks.filter(t => t.id !== taskId);
+    setCustomTasks(updated);
+    localStorage.setItem('carbon-scheduler-custom-tasks', JSON.stringify(updated));
+    if (selectedTask === taskId) {
+      setSelectedTask('');
     }
   };
 
@@ -114,6 +189,52 @@ export default function Home() {
     if (intensity < 200) return 'text-yellow-600';
     if (intensity < 300) return 'text-orange-600';
     return 'text-red-600';
+  };
+
+  const getFilteredTasks = () => {
+    // Combine preset and custom tasks
+    const allTasks: Array<[string, Task | CustomTask]> = [
+      ...Object.entries(tasks),
+      ...customTasks.map(task => [task.id, task] as [string, CustomTask])
+    ];
+
+    if (selectedCategory === 'all') {
+      return allTasks;
+    }
+    return allTasks.filter(([_, task]) => task.category === selectedCategory);
+  };
+
+  const getSelectedTaskData = () => {
+    if (!selectedTask) return null;
+    
+    // Check preset tasks first
+    if (tasks[selectedTask]) {
+      return tasks[selectedTask];
+    }
+    
+    // Check custom tasks
+    const customTask = customTasks.find(t => t.id === selectedTask);
+    return customTask || null;
+  };
+
+  const getCategoryDisplayName = (category: string) => {
+    const categoryNames = {
+      'household': 'Household',
+      'office': 'Office/Commercial', 
+      'manufacturing': 'Manufacturing',
+      'retail': 'Retail/Hospitality'
+    };
+    return categoryNames[category as keyof typeof categoryNames] || category;
+  };
+
+  const getCategoryIcon = (category: string) => {
+    const categoryIcons = {
+      'household': '🏠',
+      'office': '🏢', 
+      'manufacturing': '🏭',
+      'retail': '🏪'
+    };
+    return categoryIcons[category as keyof typeof categoryIcons] || '';
   };
 
   return (
@@ -182,6 +303,27 @@ export default function Home() {
             <h2 className="text-2xl font-semibold mb-4">🎯 Schedule Your Task</h2>
             
             <div className="mb-4">
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+                Task Category
+              </label>
+              <select
+                id="category"
+                value={selectedCategory}
+                onChange={(e) => {
+                  setSelectedCategory(e.target.value);
+                  setSelectedTask(''); // Reset task selection when category changes
+                }}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-4"
+              >
+                <option value="all">📋 All Categories</option>
+                <option value="household">{getCategoryIcon('household')} Household</option>
+                <option value="office">{getCategoryIcon('office')} Office/Commercial</option>
+                <option value="manufacturing">{getCategoryIcon('manufacturing')} Manufacturing</option>
+                <option value="retail">{getCategoryIcon('retail')} Retail/Hospitality</option>
+              </select>
+            </div>
+
+            <div className="mb-4">
               <label htmlFor="task" className="block text-sm font-medium text-gray-700 mb-2">
                 What do you want to schedule?
               </label>
@@ -191,19 +333,40 @@ export default function Home() {
                 onChange={(e) => setSelectedTask(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                {Object.entries(tasks).map(([key, task]) => (
+                <option value="">Select a task...</option>
+                {getFilteredTasks().map(([key, task]) => (
                   <option key={key} value={key}>
                     {task.icon} {task.label}
                   </option>
                 ))}
               </select>
+              {selectedCategory !== 'all' && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Showing {getCategoryDisplayName(selectedCategory)} tasks only
+                </p>
+              )}
             </div>
 
-            {selectedTask && tasks[selectedTask] && (
+            {selectedTask && getSelectedTaskData() && (
               <div className="bg-blue-50 rounded-lg p-4 mb-4">
-                <div className="text-sm text-gray-600">
-                  Duration: {tasks[selectedTask].duration_hours}h • 
-                  Energy: {tasks[selectedTask].energy_kwh}kWh
+                <div className="flex justify-between items-start">
+                  <div className="text-sm text-gray-600">
+                    Duration: {getSelectedTaskData()!.duration_hours}h • 
+                    Energy: {getSelectedTaskData()!.energy_kwh}kWh
+                    {'is_custom' in getSelectedTaskData()! && getSelectedTaskData()!.is_custom && (
+                      <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                        ✨ Custom
+                      </span>
+                    )}
+                  </div>
+                  {'is_custom' in getSelectedTaskData()! && getSelectedTaskData()!.is_custom && (
+                    <button
+                      onClick={() => deleteCustomTask(selectedTask)}
+                      className="text-red-500 hover:text-red-700 text-xs"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -211,9 +374,17 @@ export default function Home() {
             <button
               onClick={handleOptimalTime}
               disabled={loading || !selectedTask}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors mb-3"
             >
               {loading ? 'Calculating...' : 'Find Optimal Time'}
+            </button>
+
+            <button
+              onClick={() => setShowCustomModal(true)}
+              className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 border border-gray-300 transition-colors flex items-center justify-center gap-2"
+            >
+              <span className="text-lg">⚡</span>
+              Add Custom Task
             </button>
           </div>
         </div>
@@ -265,6 +436,12 @@ export default function Home() {
             </div>
           </div>
         )}
+
+        <CustomTaskModal
+          isOpen={showCustomModal}
+          onClose={() => setShowCustomModal(false)}
+          onSave={saveCustomTask}
+        />
       </div>
     </div>
   );

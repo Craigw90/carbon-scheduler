@@ -30,6 +30,7 @@ export interface Task {
   duration_hours: number;
   energy_kwh: number;
   icon: string;
+  category: 'household' | 'office' | 'manufacturing' | 'retail';
 }
 
 export interface OptimalTimeResponse {
