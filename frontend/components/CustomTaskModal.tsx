@@ -116,13 +116,13 @@ export default function CustomTaskModal({ isOpen, onClose, onSave }: CustomTaskM
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-        <h2 className="text-xl font-bold mb-4">Create Custom Task</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-black dark:bg-opacity-70 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-md mx-4">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-4">Create Custom Task</h2>
         
         <div className="space-y-4">
           <div>
-            <label htmlFor="task-name" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="task-name" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
               Task Name
             </label>
             <input
@@ -130,20 +130,20 @@ export default function CustomTaskModal({ isOpen, onClose, onSave }: CustomTaskM
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              className="w-full p-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-500 dark:placeholder-slate-400 rounded focus:ring-2 focus:ring-blue-500"
               placeholder="e.g. 3D Printer, Coffee Machine, Pool Filter"
             />
           </div>
 
           <div>
-            <label htmlFor="task-category" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="task-category" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
               Category
             </label>
             <select
               id="task-category"
               value={category}
               onChange={(e) => setCategory(e.target.value as CustomTask['category'])}
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              className="w-full p-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded focus:ring-2 focus:ring-blue-500"
             >
               <option value="household">🏠 Household</option>
               <option value="office">🏢 Office/Commercial</option>
@@ -153,7 +153,7 @@ export default function CustomTaskModal({ isOpen, onClose, onSave }: CustomTaskM
           </div>
 
           <div>
-            <label htmlFor="task-duration-range" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="task-duration-range" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
               Duration (hours)
             </label>
             <div className="flex gap-3 items-center">
@@ -184,18 +184,18 @@ export default function CustomTaskModal({ isOpen, onClose, onSave }: CustomTaskM
                     setDuration(numValue);
                   }
                 }}
-                className="w-20 px-2 py-1 border border-gray-300 rounded text-center"
+                className="w-20 px-2 py-1 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded text-center"
               />
-              <span className="text-sm text-gray-600">hours</span>
+              <span className="text-sm text-gray-600 dark:text-slate-400">hours</span>
             </div>
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <div className="flex justify-between text-xs text-gray-500 dark:text-slate-400 mt-1">
               <span>1h</span>
               <span>24h</span>
             </div>
           </div>
 
           <div>
-            <label htmlFor="task-energy-range" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="task-energy-range" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
               Energy Consumption (kWh)
             </label>
             <div className="flex gap-3 items-center">
@@ -226,21 +226,21 @@ export default function CustomTaskModal({ isOpen, onClose, onSave }: CustomTaskM
                     setEnergy(numValue);
                   }
                 }}
-                className="w-20 px-2 py-1 border border-gray-300 rounded text-center"
+                className="w-20 px-2 py-1 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded text-center"
               />
-              <span className="text-sm text-gray-600">kWh</span>
+              <span className="text-sm text-gray-600 dark:text-slate-400">kWh</span>
             </div>
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <div className="flex justify-between text-xs text-gray-500 dark:text-slate-400 mt-1">
               <span>{Math.ceil(validation.min)}kWh</span>
               <span>{validation.max}kWh</span>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
               Typical range for {category} equipment
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
               Icon
             </label>
             <div className="space-y-3">
@@ -288,12 +288,12 @@ export default function CustomTaskModal({ isOpen, onClose, onSave }: CustomTaskM
               </div>
 
               {iconType === 'emoji' && (
-                <div className="grid grid-cols-10 gap-1 max-h-20 overflow-y-auto border rounded p-2">
+                <div className="grid grid-cols-10 gap-1 max-h-20 overflow-y-auto border border-gray-300 dark:border-slate-600 rounded p-2">
                   {emojiOptions.map((emoji) => (
                     <button
                       key={emoji}
                       onClick={() => setCustomIcon(emoji)}
-                      className={`p-1 text-lg hover:bg-gray-100 rounded ${
+                      className={`p-1 text-lg hover:bg-gray-100 dark:hover:bg-slate-600 rounded ${
                         customIcon === emoji ? 'bg-blue-100' : ''
                       }`}
                     >
@@ -309,7 +309,7 @@ export default function CustomTaskModal({ isOpen, onClose, onSave }: CustomTaskM
                     <button
                       key={symbol}
                       onClick={() => setCustomIcon(symbol)}
-                      className={`px-2 py-1 border rounded hover:bg-gray-100 ${
+                      className={`px-2 py-1 border border-gray-300 dark:border-slate-600 rounded hover:bg-gray-100 dark:hover:bg-slate-600 text-gray-900 dark:text-slate-100 ${
                         customIcon === symbol ? 'bg-blue-100' : ''
                       }`}
                     >
@@ -320,14 +320,14 @@ export default function CustomTaskModal({ isOpen, onClose, onSave }: CustomTaskM
                     type="text"
                     value={iconType === 'text' ? customIcon : ''}
                     onChange={(e) => setCustomIcon(e.target.value)}
-                    className="w-16 px-2 py-1 border rounded text-center"
+                    className="w-16 px-2 py-1 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded text-center"
                     maxLength={4}
                     placeholder="ABC"
                   />
                 </div>
               )}
 
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500 dark:text-slate-400">
                 Preview: {iconType === 'category' ? getCategoryIcon(category) : iconType === 'none' ? '(no icon)' : customIcon} {name || 'Task Name'}
               </div>
             </div>
@@ -337,14 +337,14 @@ export default function CustomTaskModal({ isOpen, onClose, onSave }: CustomTaskM
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+            className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded hover:bg-gray-50 dark:hover:bg-slate-700"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={!isValidForm()}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+            className="flex-1 px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-600 disabled:bg-gray-400 dark:disabled:bg-slate-600"
           >
             Save Task
           </button>

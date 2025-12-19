@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { carbonApi, type Task, type CurrentIntensityData, type OptimalTimeResponse } from '../lib/api';
 import CustomTaskModal, { type CustomTask } from '../components/CustomTaskModal';
+import { ThemeToggle } from '../components/ThemeToggle';
 
 export default function Home() {
   const [postcode, setPostcode] = useState('G1');
@@ -238,23 +239,29 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 py-8 transition-colors">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            ⚡ Carbon-Aware Scheduler
-          </h1>
-          <p className="text-lg text-gray-600">
-            Run your tasks when Scotland's grid is greenest. Reduce emissions by up to 93%.
-          </p>
+        {/* Header with theme toggle */}
+        <div className="flex justify-between items-center mb-8">
+          <div className="text-center flex-1">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-slate-100 mb-2">
+              ⚡ Carbon-Aware Scheduler
+            </h1>
+            <p className="text-lg text-gray-600 dark:text-slate-300">
+              Run your tasks when Scotland's grid is greenest. Reduce emissions by up to 93%.
+            </p>
+          </div>
+          <div className="ml-4">
+            <ThemeToggle />
+          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-semibold mb-4">🌍 Current Carbon Intensity</h2>
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg dark:shadow-slate-900/20 p-6">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">🌍 Current Carbon Intensity</h2>
             
             <div className="mb-4">
-              <label htmlFor="postcode" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="postcode" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                 Postcode
               </label>
               <div className="relative">
@@ -263,12 +270,12 @@ export default function Home() {
                   id="postcode"
                   value={postcode}
                   onChange={(e) => setPostcode(e.target.value.toUpperCase())}
-                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-500 dark:placeholder-slate-400 ${
                     postcode.length > 1 && !isValidUKPostcode(postcode) 
-                      ? 'border-red-300 bg-red-50' 
+                      ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20' 
                       : postcode.length > 1 && isValidUKPostcode(postcode)
-                      ? 'border-green-300 bg-green-50'
-                      : 'border-gray-300'
+                      ? 'border-green-300 bg-green-50 dark:border-green-600 dark:bg-green-900/20'
+                      : 'border-gray-300 dark:border-slate-600'
                   }`}
                   placeholder="e.g. PA11 3SY, G1 1AA, EH1 1YZ"
                 />
@@ -283,14 +290,14 @@ export default function Home() {
                 )}
               </div>
               {postcode.length > 1 && !isValidUKPostcode(postcode) && (
-                <p className="text-sm text-red-600 mt-1">Please enter a valid UK postcode</p>
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">Please enter a valid UK postcode</p>
               )}
             </div>
 
             {currentIntensity && (
-              <div className="bg-gray-50 rounded-lg p-4">
+              <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Right now in {currentIntensity.region}:</span>
+                  <span className="text-sm text-gray-600 dark:text-slate-400">Right now in {currentIntensity.region}:</span>
                   <span className={`text-2xl font-bold ${getIntensityColor(currentIntensity.intensity)}`}>
                     {currentIntensity.intensity}g CO₂/kWh
                   </span>
@@ -299,11 +306,11 @@ export default function Home() {
             )}
           </div>
 
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-semibold mb-4">🎯 Schedule Your Task</h2>
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg dark:shadow-slate-900/20 p-6">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">🎯 Schedule Your Task</h2>
             
             <div className="mb-4">
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                 Task Category
               </label>
               <select
@@ -313,7 +320,7 @@ export default function Home() {
                   setSelectedCategory(e.target.value);
                   setSelectedTask(''); // Reset task selection when category changes
                 }}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-4"
+                className="w-full p-3 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-4"
               >
                 <option value="all">📋 All Categories</option>
                 <option value="household">{getCategoryIcon('household')} Household</option>
@@ -324,45 +331,45 @@ export default function Home() {
             </div>
 
             <div className="mb-4">
-              <label htmlFor="task" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="task" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                 What do you want to schedule?
               </label>
               <select
                 id="task"
                 value={selectedTask}
                 onChange={(e) => setSelectedTask(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-3 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Select a task...</option>
                 {getFilteredTasks().map(([key, task]) => (
                   <option key={key} value={key}>
-                    {task.icon} {task.label}
+                    {task.icon} {'label' in task ? task.label : task.name}
                   </option>
                 ))}
               </select>
               {selectedCategory !== 'all' && (
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
                   Showing {getCategoryDisplayName(selectedCategory)} tasks only
                 </p>
               )}
             </div>
 
             {selectedTask && getSelectedTaskData() && (
-              <div className="bg-blue-50 rounded-lg p-4 mb-4">
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4">
                 <div className="flex justify-between items-start">
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-600 dark:text-slate-300">
                     Duration: {getSelectedTaskData()!.duration_hours}h • 
                     Energy: {getSelectedTaskData()!.energy_kwh}kWh
-                    {'is_custom' in getSelectedTaskData()! && getSelectedTaskData()!.is_custom && (
-                      <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                    {('is_custom' in getSelectedTaskData()!) && (getSelectedTaskData()! as CustomTask).is_custom && (
+                      <span className="ml-2 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-1 rounded">
                         ✨ Custom
                       </span>
                     )}
                   </div>
-                  {'is_custom' in getSelectedTaskData()! && getSelectedTaskData()!.is_custom && (
+                  {('is_custom' in getSelectedTaskData()!) && (getSelectedTaskData()! as CustomTask).is_custom && (
                     <button
                       onClick={() => deleteCustomTask(selectedTask)}
-                      className="text-red-500 hover:text-red-700 text-xs"
+                      className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-xs"
                     >
                       Delete
                     </button>
@@ -374,14 +381,14 @@ export default function Home() {
             <button
               onClick={handleOptimalTime}
               disabled={loading || !selectedTask}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors mb-3"
+              className="w-full bg-blue-600 dark:bg-blue-500 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 disabled:bg-gray-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed transition-colors mb-3"
             >
               {loading ? 'Calculating...' : 'Find Optimal Time'}
             </button>
 
             <button
               onClick={() => setShowCustomModal(true)}
-              className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 border border-gray-300 transition-colors flex items-center justify-center gap-2"
+              className="w-full bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-200 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-slate-600 border border-gray-300 dark:border-slate-600 transition-colors flex items-center justify-center gap-2"
             >
               <span className="text-lg">⚡</span>
               Add Custom Task
@@ -390,47 +397,47 @@ export default function Home() {
         </div>
 
         {error && (
-          <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="text-red-800">{error}</div>
+          <div className="mt-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <div className="text-red-800 dark:text-red-200">{error}</div>
           </div>
         )}
 
         {optimalResult && (
-          <div className="mt-6 bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-semibold mb-4">
+          <div className="mt-6 bg-white dark:bg-slate-800 rounded-lg shadow-lg dark:shadow-slate-900/20 p-6">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">
               {optimalResult.task_icon} Optimal Time for {optimalResult.task_label}
             </h2>
             
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="bg-green-50 rounded-lg p-4">
-                <h3 className="font-semibold text-green-800 mb-2">Best Time to Start</h3>
-                <div className="text-xl font-bold text-green-900">
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                <h3 className="font-semibold text-green-800 dark:text-green-200 mb-2">Best Time to Start</h3>
+                <div className="text-xl font-bold text-green-900 dark:text-green-100">
                   {formatDateTime(optimalResult.optimal_window.start_time)}
                 </div>
-                <div className="text-sm text-green-700">
+                <div className="text-sm text-green-700 dark:text-green-300">
                   Run until {formatDateTime(optimalResult.optimal_window.end_time)}
                 </div>
-                <div className="mt-2 text-sm text-green-700">
+                <div className="mt-2 text-sm text-green-700 dark:text-green-300">
                   Average intensity: {optimalResult.optimal_window.avg_intensity}g CO₂/kWh
                 </div>
               </div>
 
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h3 className="font-semibold text-blue-800 mb-2">Carbon Savings</h3>
-                <div className="text-xl font-bold text-blue-900">
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Carbon Savings</h3>
+                <div className="text-xl font-bold text-blue-900 dark:text-blue-100">
                   {optimalResult.optimal_window.percentage_saved}% saved
                 </div>
-                <div className="text-sm text-blue-700">
+                <div className="text-sm text-blue-700 dark:text-blue-300">
                   {optimalResult.optimal_window.carbon_saved_grams}g CO₂ less emissions
                 </div>
-                <div className="mt-2 text-sm text-blue-700">
+                <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
                   vs running now ({optimalResult.current_intensity}g CO₂/kWh)
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600">
+            <div className="mt-4 p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
+              <p className="text-sm text-gray-600 dark:text-slate-400">
                 💡 Based on {optimalResult.forecast_length} hours of carbon intensity forecast data
               </p>
             </div>
