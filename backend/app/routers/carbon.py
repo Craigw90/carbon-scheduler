@@ -7,9 +7,9 @@ from pydantic import BaseModel
 
 from app.services.carbon_api import (
     CarbonIntensityService,
-    find_optimal_window,
-    TASK_PRESETS
+    find_optimal_window
 )
+from app.services.task_presets import TASK_PRESETS
 
 router = APIRouter(prefix="/api/carbon", tags=["carbon"])
 

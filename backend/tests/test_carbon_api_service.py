@@ -11,9 +11,9 @@ from app.services.carbon_api import (
     CarbonIntensityService,
     CarbonIntensity,
     OptimalWindow,
-    find_optimal_window,
-    TASK_PRESETS
+    find_optimal_window
 )
+from app.services.task_presets import TASK_PRESETS
 
 
 class TestCarbonIntensity:
